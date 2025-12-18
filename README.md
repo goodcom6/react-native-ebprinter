@@ -4,7 +4,8 @@ This demo demonstrates how to use the react-native-ebprinter SDK to print receip
   <img src="images/DemoUi.png" width="30%" />
   <img src="images/Receipt.png" width="50%" />
 </p>
-This is a [React Native](https://reactnative.dev) project, bootstrapped using [react-native-community/cli](https://github.com/react-native-community/cli).
+
+This is a [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
 # Getting Started
 
@@ -205,5 +206,6 @@ BarcodeType : Barcode Type
   getUsbDeviceList: ()=>  Promise<string[]>,
 
 ```
+
 
 
