@@ -1,5 +1,5 @@
 
-This demo demonstrates how to use the react-native-ebprinter SDK to print receipts. The react-native-ebprinter SDK supports Goodcom POS machines, Bluetooth printers, USB printers, and Wi-Fi printers.
+This demo demonstrates how to use the react-native-ebprinter SDK to print receipts. The react-native-ebprinter SDK supports Goodcom POS machines, Bluetooth printers, USB printers, and Wi-Fi printers([Printing devices can be viewed here](https://www.igoodcom.com/)).
 <p float="left">
   <img src="images/DemoUi.png" width="30%" />
   <img src="images/Receipt.png" width="50%" />
