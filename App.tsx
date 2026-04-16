@@ -18,6 +18,7 @@ import {
   TouchableOpacity,
   Modal,
   FlatList,
+  Alert,
 } from 'react-native';
 import {Colors, Header} from 'react-native/Libraries/NewAppScreen';
 import EbPrinter, {FontSize, AlignmentType} from 'react-native-ebprinter';
@@ -109,14 +110,34 @@ function App(): JSX.Element {
   const [strRight, setStrRight] = useState('Right');
 
   // Device button defaults and state
-  const DEFAULT_BT = 'Bluetooth Device';
-  const DEFAULT_USB = 'Usb Device';
-  const DEFAULT_IP = 'IP Device';
   const DEFAULT_OPEN_CASH = 'Open Cash';
-  const [selectedBluetooth, setSelectedBluetooth] = useState(DEFAULT_BT);
-  const [selectedUsb, setSelectedUsb] = useState(DEFAULT_USB);
-  const [selectedIp, setSelectedIp] = useState(DEFAULT_IP);
   const [openCash] = useState(DEFAULT_OPEN_CASH);
+
+  interface SelectedDevice {
+    index: number;
+    name: string;
+  }
+  const [devices, setDevices] = useState<SelectedDevice[]>([]);
+
+  const getNextIndex = () => {
+    let idx = 0;
+    while (devices.some(d => d.index === idx)) {
+      idx++;
+    }
+    return idx;
+  };
+
+  const executePrint = (action: (idx: number) => void) => {
+    if (devices.length === 0) {
+      Alert.alert('Notice', 'Please add a printing device');
+      return;
+    }
+    devices.forEach(d => action(d.index));
+  };
+
+  const removeDevice = (indexToRemove: number) => {
+    setDevices(devices.filter(d => d.index !== indexToRemove));
+  };
 
   // Modal state
   const [modalVisible, setModalVisible] = useState(false);
@@ -127,73 +148,86 @@ function App(): JSX.Element {
 
   // Button Handlers
   const printLeft = () => {
-    EbPrinter.drawCustom(strLeft, FontSize.Default, AlignmentType.Left);
-    EbPrinter.printText(true);
+    executePrint(idx => {
+      EbPrinter.drawCustom(idx, strLeft, FontSize.Default, AlignmentType.Left);
+      EbPrinter.printText(idx, true);
+    });
   };
   const printMid = () => {
-    EbPrinter.drawText('', 0, strMid, 0, '', 0);
-    EbPrinter.printText(true);
+    executePrint(idx => {
+      EbPrinter.drawText(idx, '', 0, strMid, 0, '', 0);
+      EbPrinter.printText(idx, true);
+    });
   };
   const printRight = () => {
-    EbPrinter.drawText('', 0, '', 0, strRight, 0);
-    EbPrinter.printText(true);
+    executePrint(idx => {
+      EbPrinter.drawText(idx, '', 0, '', 0, strRight, 0);
+      EbPrinter.printText(idx, true);
+    });
   };
-  const openCashBox = ()=>{
-    EbPrinter.openCashBox();
+  const openCashBox = () => {
+    executePrint(idx => {
+      EbPrinter.openCashBox(idx);
+    });
   };
   const printTicket = () => {
-    EbPrinter.printImageByBase64(
-      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYQAAACGCAYAAADdAv1sAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAAZdEVYdFNvZnR3YXJlAEFkb2JlIEltYWdlUmVhZHlxyWU8AAADJmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS42LWMxNDUgNzkuMTYzNDk5LCAyMDE4LzA4LzEzLTE2OjQwOjIyICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdFJlZj0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlUmVmIyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOSAoV2luZG93cykiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6N0M1NjU4OUFEMUZEMTFFREFBM0E4MjQ1N0E0M0IzREUiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6N0M1NjU4OUJEMUZEMTFFREFBM0E4MjQ1N0E0M0IzREUiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo3QzU2NTg5OEQxRkQxMUVEQUEzQTgyNDU3QTQzQjNERSIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo3QzU2NTg5OUQxRkQxMUVEQUEzQTgyNDU3QTQzQjNERSIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRG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',
-      AlignmentType.Center,
-      false,
-    );
-    EbPrinter.drawOneLine(FontSize.MediumBold);
-    EbPrinter.drawCustom('Request Time', FontSize.Medium, AlignmentType.Center);
-    EbPrinter.drawCustom('10:03', FontSize.MediumBold, AlignmentType.Center);
-    EbPrinter.drawOneLineDefault();
-    EbPrinter.drawText(
-      '1 x',
-      FontSize.SmallBold,
-      'test',
-      FontSize.SmallBold,
-      '65.00',
-      FontSize.SmallBold,
-    );
-    EbPrinter.drawLeftRight(
-      'option1',
-      FontSize.Default,
-      '60.00',
-      FontSize.Default,
-    );
-    EbPrinter.drawText(
-      'option2',
-      FontSize.Default,
-      '',
-      FontSize.Default,
-      '5.00',
-      FontSize.Default,
-    );
-    EbPrinter.drawQrCode('test123', AlignmentType.Center);
-    EbPrinter.drawText('', 0, 'test123', FontSize.Default, '', 0);
-    EbPrinter.drawOneLineDefault();
-    EbPrinter.drawCustom('Thanks!', FontSize.Small, AlignmentType.Center);
-    EbPrinter.printText(true);
+    executePrint(idx => {
+      EbPrinter.printImageByBase64(idx,
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYQAAACGCAYAAADdAv1sAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAAZdEVYdFNvZnR3YXJlAEFkb2JlIEltYWdlUmVhZHlxyWU8AAADJmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS42LWMxNDUgNzkuMTYzNDk5LCAyMDE4LzA4LzEzLTE2OjQwOjIyICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdFJlZj0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlUmVmIyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOSAoV2luZG93cykiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6N0M1NjU4OUFEMUZEMTFFREFBM0E4MjQ1N0E0M0IzREUiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6N0M1NjU4OUJEMUZEMTFFREFBM0E4MjQ1N0E0M0IzREUiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo3QzU2NTg5OEQxRkQxMUVEQUEzQTgyNDU3QTQzQjNERSIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo3QzU2NTg5OUQxRkQxMUVEQUEzQTgyNDU3QTQzQjNERSIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRG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',
+        AlignmentType.Center,
+        false,
+      );
+      EbPrinter.drawOneLine(idx, FontSize.MediumBold);
+      EbPrinter.drawCustom(idx, 'Request Time', FontSize.Medium, AlignmentType.Center);
+      EbPrinter.drawCustom(idx, '10:03', FontSize.MediumBold, AlignmentType.Center);
+      EbPrinter.drawOneLineDefault(idx);
+      EbPrinter.drawText(idx,
+        '1 x',
+        FontSize.SmallBold,
+        'test',
+        FontSize.SmallBold,
+        '65.00',
+        FontSize.SmallBold,
+      );
+      EbPrinter.drawLeftRight(idx,
+        'option1',
+        FontSize.Default,
+        '60.00',
+        FontSize.Default,
+      );
+      EbPrinter.drawText(idx,
+        'option2',
+        FontSize.Default,
+        '',
+        FontSize.Default,
+        '5.00',
+        FontSize.Default,
+      );
+      EbPrinter.drawQrCode(idx, 'test123', AlignmentType.Center);
+      EbPrinter.drawText(idx, '', 0, 'test123', FontSize.Default, '', 0);
+      EbPrinter.drawOneLineDefault(idx);
+      EbPrinter.drawCustom(idx, 'Thanks!', FontSize.Small, AlignmentType.Center);
+      EbPrinter.printText(idx, true);
+    });
   };
   const printImageByBase64 = () => {
-    EbPrinter.printImageByBase64(
-      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYQAAACGCAYAAADdAv1sAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAAZdEVYdFNvZnR3YXJlAEFkb2JlIEltYWdlUmVhZHlxyWU8AAADJmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS42LWMxNDUgNzkuMTYzNDk5LCAyMDE4LzA4LzEzLTE2OjQwOjIyICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdFJlZj0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlUmVmIyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOSAoV2luZG93cykiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6N0M1NjU4OUFEMUZEMTFFREFBM0E4MjQ1N0E0M0IzREUiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6N0M1NjU4OUJEMUZEMTFFREFBM0E4MjQ1N0E0M0IzREUiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo3QzU2NTg5OEQxRkQxMUVEQUEzQTgyNDU3QTQzQjNERSIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo3QzU2NTg5OUQxRkQxMUVEQUEzQTgyNDU3QTQzQjNERSIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRG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',
-      AlignmentType.Center,
-      true,
-    );
+    executePrint(idx => {
+      EbPrinter.printImageByBase64(idx,
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYQAAACGCAYAAADdAv1sAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAAZdEVYdFNvZnR3YXJlAEFkb2JlIEltYWdlUmVhZHlxyWU8AAADJmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS42LWMxNDUgNzkuMTYzNDk5LCAyMDE4LzA4LzEzLTE2OjQwOjIyICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdFJlZj0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlUmVmIyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOSAoV2luZG93cykiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6N0M1NjU4OUFEMUZEMTFFREFBM0E4MjQ1N0E0M0IzREUiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6N0M1NjU4OUJEMUZEMTFFREFBM0E4MjQ1N0E0M0IzREUiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo3QzU2NTg5OEQxRkQxMUVEQUEzQTgyNDU3QTQzQjNERSIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo3QzU2NTg5OUQxRkQxMUVEQUEzQTgyNDU3QTQzQjNERSIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRG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',
+        AlignmentType.Center,
+        true,
+      );
+    });
   };
+
   // Device Modal Handlers
   const openDeviceModal = async (type: 'bluetooth' | 'usb' | 'ip') => {
     setModalType(type);
     if (type === 'bluetooth') {
-      const list = await EbPrinter.getBluetoothDeviceList();
+      const list = await EbPrinter.getBluetoothDeviceList(0);
       setDeviceList(list);
     } else if (type === 'usb') {
-      const list = await EbPrinter.getUsbDeviceList();
+      const list = await EbPrinter.getUsbDeviceList(0);
       setDeviceList(list);
     }
     setModalVisible(true);
@@ -202,25 +236,31 @@ function App(): JSX.Element {
   const cancelModal = () => setModalVisible(false);
 
   const selectDevice = (item: string) => {
-    if (modalType === 'bluetooth') {
-      setSelectedBluetooth(item);
-      setSelectedUsb(DEFAULT_USB);
-      setSelectedIp(DEFAULT_IP);
-      EbPrinter.selectBluetoothPrinter(item);
-    } else if (modalType === 'usb') {
-      setSelectedUsb(item);
-      setSelectedBluetooth(DEFAULT_BT);
-      setSelectedIp(DEFAULT_IP);
-      EbPrinter.selectUsbPrinter(item);
+    let typeName = modalType === 'bluetooth' ? 'BT' : 'USB';
+    const deviceName = `[${typeName}] ${item}`;
+    if (devices.some(d => d.name === deviceName)) {
+      Alert.alert('Notice', 'This device has already been added.');
+      return;
     }
+    const newIdx = getNextIndex();
+    if (modalType === 'bluetooth') {
+      EbPrinter.selectBluetoothPrinter(newIdx, item);
+    } else if (modalType === 'usb') {
+      EbPrinter.selectUsbPrinter(newIdx, item);
+    }
+    setDevices([...devices, { index: newIdx, name: deviceName }]);
     cancelModal();
   };
 
   const confirmIpDevice = () => {
-    setSelectedIp(ipAddress);
-    setSelectedBluetooth(DEFAULT_BT);
-    setSelectedUsb(DEFAULT_USB);
-    EbPrinter.selectNetworkPrinter(ipAddress, parseInt(ipPort, 10));
+    const deviceName = `[IP] ${ipAddress}:${ipPort}`;
+    if (devices.some(d => d.name === deviceName)) {
+      Alert.alert('Notice', 'This device has already been added.');
+      return;
+    }
+    const newIdx = getNextIndex();
+    EbPrinter.selectNetworkPrinter(newIdx, ipAddress, parseInt(ipPort, 10));
+    setDevices([...devices, { index: newIdx, name: deviceName }]);
     cancelModal();
   };
 
@@ -231,7 +271,7 @@ function App(): JSX.Element {
     </TouchableOpacity>
   );
 
-  const PrintButton = ({ title, onPress }: { title: Element; onPress: () => void }) => (
+  const PrintButton = ({ title, onPress }: { title: React.ReactNode; onPress: () => void }) => (
     <TouchableOpacity style={styles.printButton} onPress={onPress}>
       <Text style={styles.printButtonText}>{title}</Text>
     </TouchableOpacity>
@@ -275,18 +315,31 @@ function App(): JSX.Element {
         {/* Device Buttons */}
         <View style={styles.deviceButtonContainer}>
           <CustomButton
-            title={selectedBluetooth}
+            title="+ Add Bluetooth"
             onPress={() => openDeviceModal('bluetooth')}
           />
           <CustomButton
-            title={selectedUsb}
+            title="+ Add USB Device"
             onPress={() => openDeviceModal('usb')}
           />
           <CustomButton
-            title={selectedIp}
+            title="+ Add IP Device"
             onPress={() => openDeviceModal('ip')}
           />
           <CustomButton title={openCash} onPress={openCashBox} />
+          {devices.length > 0 && (
+            <View style={{ marginTop: 15 }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 5 }}>Connected Devices ({devices.length}):</Text>
+              {devices.map(d => (
+                <View key={d.index} style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 2 }}>
+                  <Text style={{ fontSize: 14, flex: 1 }}>  • {d.name} (ID: {d.index})</Text>
+                  <TouchableOpacity onPress={() => removeDevice(d.index)} style={{ padding: 5, backgroundColor: '#ff4d4f', borderRadius: 4 }}>
+                    <Text style={{ color: '#fff', fontSize: 12 }}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Modal */}
