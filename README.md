@@ -184,7 +184,8 @@ The `deviceIndex` parameter represents the device number, which defaults to -1. 
   selectBluetoothPrinter: (deviceIndex,macAddress) => void,
   /**
   * Select USB printing and specify the USB printing device
-  * The deviceInfo format: vendor_id: xxx product_id: yyy Where xxx represents the vendor ID and yyy represents the product ID
+  * The deviceInfo format: vendor_id: xxx product_id: yyy 
+  * Where xxx represents the vendor ID and yyy represents the product ID
   */
   selectUsbPrinter: (deviceIndex,deviceInfo) => void,
   /**
